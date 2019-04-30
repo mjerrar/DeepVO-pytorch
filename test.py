@@ -11,9 +11,9 @@ from data_helper import get_data_info, ImageSequenceDataset
 from torch.utils.data import DataLoader
 from helper import eulerAnglesToRotationMatrix
 
-if __name__ == '__main__':    
+if __name__ == '__main__':
 
-	videos_to_test = ['04', '05', '07', '10', '09']
+	videos_to_test = ['06']
 
 	# Path
 	load_model_path = par.load_model_path   #choose the model you want to load
@@ -52,8 +52,8 @@ if __name__ == '__main__':
 		dataset = ImageSequenceDataset(df, par.resize_mode, (par.img_w, par.img_h), par.img_means, par.img_stds, par.minus_point_5)
 		df.to_csv('test_df.csv')
 		dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=n_workers)
-		
-		gt_pose = np.load('{}{}.npy'.format(par.pose_dir, test_video))  # (n_images, 6)
+
+		#gt_pose = np.load('{}{}.npy'.format(par.pose_dir, test_video))  # (n_images, 6)
 
 		# Predict
 		M_deepvo.eval()
@@ -64,10 +64,10 @@ if __name__ == '__main__':
 
 		for i, batch in enumerate(dataloader):
 			print('{} / {}'.format(i, n_batch), end='\r', flush=True)
-			_, x, y = batch
+			_, x = batch
 			if use_cuda:
 				x = x.cuda()
-				y = y.cuda()
+				#y = y.cuda()
 			batch_predict_pose = M_deepvo.forward(x)
 
 			# Record answer
@@ -87,8 +87,8 @@ if __name__ == '__main__':
 					answer.append(pose.tolist())
 				batch_predict_pose = batch_predict_pose[1:]
 
-			# transform from relative to absolute 
-			
+			# transform from relative to absolute
+
 			for predict_pose_seq in batch_predict_pose:
 				# predict_pose_seq[1:] = predict_pose_seq[1:] + predict_pose_seq[0:-1]
 				ang = eulerAnglesToRotationMatrix([0, answer[-1][0], 0]) #eulerAnglesToRotationMatrix([answer[-1][1], answer[-1][0], answer[-1][2]])
@@ -119,12 +119,12 @@ if __name__ == '__main__':
 
 
 		# Calculate loss
-		gt_pose = np.load('{}{}.npy'.format(par.pose_dir, test_video))  # (n_images, 6)
-		loss = 0
-		for t in range(len(gt_pose)):
-			angle_loss = np.sum((answer[t][:3] - gt_pose[t,:3]) ** 2)
-			translation_loss = np.sum((answer[t][3:] - gt_pose[t,3:6]) ** 2)
-			loss = (100 * angle_loss + translation_loss)
-		loss /= len(gt_pose)
-		print('Loss = ', loss)
-		print('='*50)
+		# gt_pose = np.load('{}{}.npy'.format(par.pose_dir, test_video))  # (n_images, 6)
+		# loss = 0
+		# for t in range(len(gt_pose)):
+		# 	angle_loss = np.sum((answer[t][:3] - gt_pose[t,:3]) ** 2)
+		# 	translation_loss = np.sum((answer[t][3:] - gt_pose[t,3:6]) ** 2)
+		# 	loss = (100 * angle_loss + translation_loss)
+		# loss /= len(gt_pose)
+		# print('Loss = ', loss)
+		# print('='*50)
